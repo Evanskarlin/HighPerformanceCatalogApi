@@ -1,3 +1,5 @@
+using Catalog.Application.Interfaces;
+using Catalog.Infrastructure.Repositories;
 using Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CatalogDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("PostgreSql")));
+
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add services to the container.
 
