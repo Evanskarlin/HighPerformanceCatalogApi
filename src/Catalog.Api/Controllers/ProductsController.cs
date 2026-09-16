@@ -1,3 +1,4 @@
+using Catalog.Api.Models.Products;
 using Catalog.Application.Interfaces;
 using Catalog.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -34,5 +35,31 @@ public class ProductsController : ControllerBase
         }
 
         return Ok(product);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Product>> Create(CreateProductRequest request)
+    {
+        var now = DateTime.UtcNow;
+    
+        var product = new Product
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            Description = request.Description,
+            Category = request.Category,
+            Brand = request.Brand,
+            Price = request.Price,
+            Stock = request.Stock,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+    
+        await _productRepository.AddAsync(product);
+    
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = product.Id },
+            product);
     }
 }
