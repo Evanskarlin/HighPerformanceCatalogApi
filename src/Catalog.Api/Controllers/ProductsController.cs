@@ -62,4 +62,44 @@ public class ProductsController : ControllerBase
             new { id = product.Id },
             product);
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<Product>> Update(
+        Guid id,
+        UpdateProductRequest request)
+    {
+        var product = await _productRepository.GetByIdAsync(id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        product.Name = request.Name;
+        product.Description = request.Description;
+        product.Category = request.Category;
+        product.Brand = request.Brand;
+        product.Price = request.Price;
+        product.Stock = request.Stock;
+        product.UpdatedAt = DateTime.UtcNow;
+
+        await _productRepository.UpdateAsync(product);
+
+        return Ok(product);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var product = await _productRepository.GetByIdAsync(id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        await _productRepository.DeleteAsync(product);
+
+        return NoContent();
+    }
 }
