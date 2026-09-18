@@ -9,6 +9,14 @@ builder.Services.AddDbContext<CatalogDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("PostgreSql")));
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration =
+        builder.Configuration.GetConnectionString("Redis");
+
+    options.InstanceName = "Catalog:";
+});
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add services to the container.
