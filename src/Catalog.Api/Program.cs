@@ -2,6 +2,7 @@ using Catalog.Application.Interfaces;
 using Catalog.Infrastructure.Repositories;
 using Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Catalog.Infrastructure.Caching;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
 
 // Add services to the container.
 

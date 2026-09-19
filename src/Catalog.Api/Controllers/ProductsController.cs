@@ -10,10 +10,17 @@ namespace Catalog.Api.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductRepository _productRepository;
+    private readonly IProductCacheService _productCacheService;
+    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(IProductRepository productRepository)
+    public ProductsController(
+        IProductRepository productRepository,
+        IProductCacheService productCacheService,
+        ILogger<ProductsController> logger)
     {
         _productRepository = productRepository;
+        _productCacheService = productCacheService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -27,12 +34,29 @@ public class ProductsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Product>> GetById(Guid id)
     {
+        var cachedProduct = await _productCacheService.GetAsync(id);
+
+        if (cachedProduct is not null)
+        {
+            _logger.LogInformation(
+                "Cache HIT for product {ProductId}",
+                id);
+
+            return Ok(cachedProduct);
+        }
+
+        _logger.LogInformation(
+            "Cache MISS for product {ProductId}",
+            id);
+
         var product = await _productRepository.GetByIdAsync(id);
 
         if (product is null)
         {
             return NotFound();
         }
+
+        await _productCacheService.SetAsync(product);
 
         return Ok(product);
     }
