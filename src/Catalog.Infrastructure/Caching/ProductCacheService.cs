@@ -49,6 +49,13 @@ public class ProductCacheService : IProductCacheService
             options);
     }
 
+    public async Task RemoveAsync(Guid id)
+    {
+        var cacheKey = GetCacheKey(id);
+
+        await _cache.RemoveAsync(cacheKey);
+    }
+
     private static string GetCacheKey(Guid id)
     {
         return $"product:{id}";
