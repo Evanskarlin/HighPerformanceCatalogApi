@@ -3,6 +3,7 @@ using Catalog.Infrastructure.Repositories;
 using Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Catalog.Infrastructure.Caching;
+using Elastic.Clients.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,18 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
     options.InstanceName = "Catalog:";
 });
+
+var elasticsearchUrl =
+    builder.Configuration.GetConnectionString("Elasticsearch")
+    ?? throw new InvalidOperationException(
+        "Elasticsearch connection string is not configured.");
+
+var elasticsearchSettings =
+    new ElasticsearchClientSettings(
+        new Uri(elasticsearchUrl));
+
+builder.Services.AddSingleton(
+    new ElasticsearchClient(elasticsearchSettings));
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
@@ -40,5 +53,16 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/health/elasticsearch",
+    async (ElasticsearchClient client) =>
+    {
+        var response = await client.PingAsync();
+
+        return response.IsValidResponse
+            ? Results.Ok(new { status = "healthy" })
+            : Results.Problem(
+                "Elasticsearch is unavailable.");
+    });
 
 app.Run();
