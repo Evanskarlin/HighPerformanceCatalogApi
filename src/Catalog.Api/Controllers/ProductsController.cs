@@ -12,14 +12,17 @@ public class ProductsController : ControllerBase
     private readonly IProductRepository _productRepository;
     private readonly IProductCacheService _productCacheService;
     private readonly ILogger<ProductsController> _logger;
+    private readonly IProductSearchService _productSearchService;
 
     public ProductsController(
         IProductRepository productRepository,
         IProductCacheService productCacheService,
+        IProductSearchService productSearchService,
         ILogger<ProductsController> logger)
     {
         _productRepository = productRepository;
         _productCacheService = productCacheService;
+        _productSearchService = productSearchService;
         _logger = logger;
     }
 
@@ -80,6 +83,7 @@ public class ProductsController : ControllerBase
         };
     
         await _productRepository.AddAsync(product);
+        await _productSearchService.IndexAsync(product);
     
         return CreatedAtAction(
             nameof(GetById),

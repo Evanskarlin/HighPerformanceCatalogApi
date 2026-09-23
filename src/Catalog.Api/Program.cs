@@ -4,6 +4,7 @@ using Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Catalog.Infrastructure.Caching;
 using Elastic.Clients.Elasticsearch;
+using Catalog.Infrastructure.Search;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,10 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
     options.InstanceName = "Catalog:";
 });
+
+builder.Services.AddScoped<
+    IProductSearchService,
+    ElasticsearchProductSearchService>();
 
 var elasticsearchUrl =
     builder.Configuration.GetConnectionString("Elasticsearch")
@@ -41,6 +46,15 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var productSearchService =
+        scope.ServiceProvider
+            .GetRequiredService<IProductSearchService>();
+
+    await productSearchService.CreateIndexAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
