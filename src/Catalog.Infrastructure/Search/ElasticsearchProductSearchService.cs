@@ -79,4 +79,31 @@ public class ElasticsearchProductSearchService
                 $"Failed to index product: {response.DebugInformation}");
         }
     }
+
+    public async Task<IReadOnlyList<ProductSearchDocument>> SearchAsync(string query)
+    {
+        var response =
+            await _client.SearchAsync<ProductSearchDocument>(
+                search => search
+                    .Indices(IndexName)
+                    .Query(q => q
+                        .MultiMatch(m => m
+                            .Query(query)
+                            .Fields(new[]
+                            {
+                                "name",
+                                "description"
+                            })
+                        )
+                    )
+            );
+
+        if (!response.IsValidResponse)
+        {
+            throw new InvalidOperationException(
+                $"Failed to search products: {response.DebugInformation}");
+        }
+
+        return response.Documents.ToList();
+    }
 }

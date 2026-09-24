@@ -64,6 +64,22 @@ public class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(
+        [FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            return BadRequest(
+                new { message = "Search query is required." });
+        }
+
+        var products =
+            await _productSearchService.SearchAsync(q);
+
+        return Ok(products);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Product>> Create(CreateProductRequest request)
     {
