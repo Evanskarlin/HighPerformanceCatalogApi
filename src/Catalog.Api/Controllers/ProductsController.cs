@@ -131,6 +131,8 @@ public class ProductsController : ControllerBase
 
         await _productCacheService.RemoveAsync(product.Id);
 
+        await _productSearchService.IndexAsync(product);
+
         return Ok(product);
     }
 
@@ -147,6 +149,8 @@ public class ProductsController : ControllerBase
         await _productRepository.DeleteAsync(product);
 
         await _productCacheService.RemoveAsync(product.Id);
+
+        await _productSearchService.DeleteAsync(product.Id);
 
         return NoContent();
     }

@@ -106,4 +106,19 @@ public class ElasticsearchProductSearchService
 
         return response.Documents.ToList();
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var response =
+            await _client.DeleteAsync<ProductSearchDocument>(
+                id,
+                delete => delete.Index(IndexName));
+
+        if (!response.IsValidResponse &&
+            response.ApiCallDetails.HttpStatusCode != 404)
+        {
+            throw new InvalidOperationException(
+                $"Failed to delete product from Elasticsearch: {response.DebugInformation}");
+        }
+    }
 }

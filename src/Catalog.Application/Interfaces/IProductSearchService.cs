@@ -9,6 +9,8 @@ public interface IProductSearchService
 
     Task IndexAsync(Product product);
 
+    Task DeleteAsync(Guid id);
+
     Task<IReadOnlyList<ProductSearchDocument>> SearchAsync(
     string query);
 }
