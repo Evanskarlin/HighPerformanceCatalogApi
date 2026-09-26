@@ -13,16 +13,19 @@ public class ProductsController : ControllerBase
     private readonly IProductCacheService _productCacheService;
     private readonly ILogger<ProductsController> _logger;
     private readonly IProductSearchService _productSearchService;
+    private readonly IProductSearchCacheService _productSearchCacheService;
 
     public ProductsController(
         IProductRepository productRepository,
         IProductCacheService productCacheService,
         IProductSearchService productSearchService,
+        IProductSearchCacheService productSearchCacheService,
         ILogger<ProductsController> logger)
     {
         _productRepository = productRepository;
         _productCacheService = productCacheService;
         _productSearchService = productSearchService;
+        _productSearchCacheService = productSearchCacheService;
         _logger = logger;
     }
 
@@ -74,8 +77,28 @@ public class ProductsController : ControllerBase
                 new { message = "Search query is required." });
         }
 
+        var cachedProducts =
+            await _productSearchCacheService.GetAsync(q);
+
+        if (cachedProducts is not null)
+        {
+            _logger.LogInformation(
+                "Search cache HIT for query {Query}",
+                q);
+
+            return Ok(cachedProducts);
+        }
+
+        _logger.LogInformation(
+            "Search cache MISS for query {Query}",
+            q);
+
         var products =
             await _productSearchService.SearchAsync(q);
+
+        await _productSearchCacheService.SetAsync(
+            q,
+            products);
 
         return Ok(products);
     }

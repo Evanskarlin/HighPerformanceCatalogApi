@@ -20,9 +20,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "Catalog:";
 });
 
-builder.Services.AddScoped<
-    IProductSearchService,
-    ElasticsearchProductSearchService>();
+builder.Services.AddScoped<IProductSearchService, ElasticsearchProductSearchService>();
 
 var elasticsearchUrl =
     builder.Configuration.GetConnectionString("Elasticsearch")
@@ -38,6 +36,7 @@ builder.Services.AddSingleton(
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
+builder.Services.AddScoped<IProductSearchCacheService, ProductSearchCacheService>();
 
 // Add services to the container.
 
