@@ -8,6 +8,8 @@ public interface IProductRepository
 
     Task<IReadOnlyList<Product>> GetAllAsync();
 
+    Task<IReadOnlyList<Product>> SearchAsync(string query);
+
     Task AddAsync(Product product);
 
     Task UpdateAsync(Product product);

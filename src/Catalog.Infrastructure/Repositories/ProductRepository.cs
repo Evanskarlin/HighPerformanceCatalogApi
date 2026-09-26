@@ -27,6 +27,22 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<Product>> SearchAsync(string query)
+    {
+        var pattern = $"%{query.Trim()}%";
+
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(product =>
+                EF.Functions.ILike(product.Name, pattern) ||
+                (product.Description != null &&
+                EF.Functions.ILike(
+                    product.Description,
+                    pattern)))
+            .Take(50)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(Product product)
     {
         await _dbContext.Products.AddAsync(product);

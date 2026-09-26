@@ -3,6 +3,7 @@ using Catalog.Application.Search;
 using Catalog.Domain.Entities;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.Mapping;
+using Catalog.Application.Exceptions;
 
 namespace Catalog.Infrastructure.Search;
 
@@ -82,29 +83,41 @@ public class ElasticsearchProductSearchService
 
     public async Task<IReadOnlyList<ProductSearchDocument>> SearchAsync(string query)
     {
-        var response =
-            await _client.SearchAsync<ProductSearchDocument>(
-                search => search
-                    .Indices(IndexName)
-                    .Query(q => q
-                        .MultiMatch(m => m
-                            .Query(query)
-                            .Fields(new[]
-                            {
-                                "name",
-                                "description"
-                            })
-                        )
-                    )
-            );
-
-        if (!response.IsValidResponse)
+        try
         {
-            throw new InvalidOperationException(
-                $"Failed to search products: {response.DebugInformation}");
-        }
+            var response =
+                await _client.SearchAsync<ProductSearchDocument>(
+                    search => search
+                        .Indices(IndexName)
+                        .Query(q => q
+                            .MultiMatch(m => m
+                                .Query(query)
+                                .Fields(new[]
+                                {
+                                    "name",
+                                    "description"
+                                })
+                            )
+                        )
+                );
 
-        return response.Documents.ToList();
+            if (!response.IsValidResponse)
+            {
+                throw new ProductSearchUnavailableException(
+                    $"Elasticsearch search failed: {response.DebugInformation}");
+            }
+
+            return response.Documents.ToList();
+        }
+        catch (ProductSearchUnavailableException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw new ProductSearchUnavailableException(
+                $"Elasticsearch search failed: {exception.Message}");
+        }
     }
 
     public async Task DeleteAsync(Guid id)

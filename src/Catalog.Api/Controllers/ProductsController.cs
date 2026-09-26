@@ -2,6 +2,8 @@ using Catalog.Api.Models.Products;
 using Catalog.Application.Interfaces;
 using Catalog.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Catalog.Application.Exceptions;
+using Catalog.Application.Search;
 
 namespace Catalog.Api.Controllers;
 
@@ -93,14 +95,44 @@ public class ProductsController : ControllerBase
             "Search cache MISS for query {Query}",
             q);
 
-        var products =
-            await _productSearchService.SearchAsync(q);
+        try
+        {
+            var products =
+                await _productSearchService.SearchAsync(q);
 
-        await _productSearchCacheService.SetAsync(
-            q,
-            products);
+            await _productSearchCacheService.SetAsync(
+                q,
+                products);
 
-        return Ok(products);
+            return Ok(products);
+        }
+        catch (ProductSearchUnavailableException exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Elasticsearch unavailable. Falling back to PostgreSQL for query {Query}",
+                q);
+
+            var fallbackProducts =
+                await _productRepository.SearchAsync(q);
+
+            var fallbackDocuments =
+                fallbackProducts
+                    .Select(product =>
+                        new ProductSearchDocument
+                        {
+                            Id = product.Id,
+                            Name = product.Name,
+                            Description = product.Description,
+                            Category = product.Category,
+                            Brand = product.Brand,
+                            Price = product.Price,
+                            Stock = product.Stock
+                        })
+                    .ToList();
+
+            return Ok(fallbackDocuments);
+        }
     }
 
     [HttpPost]
