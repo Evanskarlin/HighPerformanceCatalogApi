@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Catalog.Infrastructure.Caching;
 using Elastic.Clients.Elasticsearch;
 using Catalog.Infrastructure.Search;
+using Catalog.Api.Health;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,18 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services
+    .AddHealthChecks()
+    .AddCheck<PostgreSqlHealthCheck>(
+        "postgresql",
+        tags: new[] { "database", "ready" })
+    .AddCheck<RedisHealthCheck>(
+        "redis",
+        tags: new[] { "cache", "ready" })
+    .AddCheck<ElasticsearchHealthCheck>(
+        "elasticsearch",
+        tags: new[] { "search", "ready" });
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -76,6 +90,14 @@ app.MapGet("/health/elasticsearch",
             ? Results.Ok(new { status = "healthy" })
             : Results.Problem(
                 "Elasticsearch is unavailable.");
+    });
+
+app.MapHealthChecks(
+    "/health",
+    new HealthCheckOptions
+    {
+        ResponseWriter =
+            HealthCheckResponseWriter.WriteResponse
     });
 
 app.Run();
