@@ -196,4 +196,31 @@ public class ProductsApiTests
             HttpStatusCode.NotFound,
             getResponse.StatusCode);
     }
+
+    [Fact]
+    public async Task GetProducts_ReturnsResponseTimeHeader()
+    {
+        // Act
+        var response =
+            await _client.GetAsync(
+                "/api/products");
+
+        // Assert
+        Assert.True(
+            response.Headers.Contains(
+                "X-Response-Time-Ms"));
+
+        var headerValue =
+            response.Headers
+                .GetValues("X-Response-Time-Ms")
+                .Single();
+
+        Assert.True(
+            double.TryParse(
+                headerValue,
+                out var elapsedMilliseconds));
+
+        Assert.True(
+            elapsedMilliseconds >= 0);
+    }
 }

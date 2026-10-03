@@ -7,6 +7,7 @@ using Elastic.Clients.Elasticsearch;
 using Catalog.Infrastructure.Search;
 using Catalog.Api.Health;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Catalog.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<RequestPerformanceMiddleware>();
 
 app.UseAuthorization();
 
