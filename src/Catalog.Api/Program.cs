@@ -82,6 +82,9 @@ app.UseMiddleware<RequestPerformanceMiddleware>();
 
 app.UseAuthorization();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
 
 app.MapGet("/health/elasticsearch",
