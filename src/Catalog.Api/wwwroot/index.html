@@ -210,7 +210,21 @@
 
             <div class="metric">
                 Response time:
-                <strong id="response-time">
+                <strong id="search-response-time">
+                    -
+                </strong>
+            </div>
+
+            <div class="metric">
+                Cache:
+                <strong id="search-cache-status">
+                    -
+                </strong>
+            </div>
+
+            <div class="metric">
+                Data source:
+                <strong id="search-data-source">
                     -
                 </strong>
             </div>
@@ -369,6 +383,14 @@ Redis query cache
         const responseTime =
             document.getElementById(
                 "search-response-time");
+        
+        const cacheStatus =
+            document.getElementById(
+                "search-cache-status");
+
+        const dataSource =
+            document.getElementById(
+                "search-data-source");
 
         const query =
             input.value.trim();
@@ -386,6 +408,12 @@ Redis query cache
         responseTime.textContent =
             "-";
 
+        cacheStatus.textContent =
+            "-";
+
+        dataSource.textContent =
+            "-";
+
         try {
             const response =
                 await fetch(
@@ -396,11 +424,25 @@ Redis query cache
             const timing =
                 response.headers.get(
                     "X-Response-Time-Ms");
+            
+            const cache =
+                response.headers.get(
+                    "X-Cache-Status");
+
+            const source =
+                response.headers.get(
+                    "X-Data-Source");
 
             responseTime.textContent =
                 timing
                     ? `${timing} ms`
                     : "Unavailable";
+                    
+            cacheStatus.textContent =
+                cache ?? "Unavailable";
+
+            dataSource.textContent =
+                source ?? "Unavailable";
 
             if (!response.ok) {
                 results.textContent =

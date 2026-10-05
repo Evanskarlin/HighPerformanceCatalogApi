@@ -88,6 +88,12 @@ public class ProductsController : ControllerBase
                 "Search cache HIT for query {Query}",
                 q);
 
+            Response.Headers["X-Cache-Status"] =
+                "HIT";
+
+            Response.Headers["X-Data-Source"] =
+                "Redis";
+
             return Ok(cachedProducts);
         }
 
@@ -103,6 +109,12 @@ public class ProductsController : ControllerBase
             await _productSearchCacheService.SetAsync(
                 q,
                 products);
+            
+            Response.Headers["X-Cache-Status"] =
+                "MISS";
+
+            Response.Headers["X-Data-Source"] =
+                "Elasticsearch";
 
             return Ok(products);
         }
@@ -130,6 +142,12 @@ public class ProductsController : ControllerBase
                             Stock = product.Stock
                         })
                     .ToList();
+            
+            Response.Headers["X-Cache-Status"] =
+                "MISS";
+
+            Response.Headers["X-Data-Source"] =
+                "PostgreSQL";
 
             return Ok(fallbackDocuments);
         }

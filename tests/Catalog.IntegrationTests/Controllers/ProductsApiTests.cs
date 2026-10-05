@@ -223,4 +223,52 @@ public class ProductsApiTests
         Assert.True(
             elapsedMilliseconds >= 0);
     }
+
+    [Fact]
+    public async Task SearchProducts_RepeatedQuery_ReturnsCacheHit()
+    {
+        // Arrange
+        var query =
+            $"cache-test-{Guid.NewGuid()}";
+
+        // Act
+        var firstResponse =
+            await _client.GetAsync(
+                $"/api/products/search?q={query}");
+
+        var secondResponse =
+            await _client.GetAsync(
+                $"/api/products/search?q={query}");
+
+        // Assert
+        Assert.True(
+            firstResponse.IsSuccessStatusCode);
+
+        Assert.True(
+            secondResponse.IsSuccessStatusCode);
+
+        Assert.Equal(
+            "MISS",
+            firstResponse.Headers
+                .GetValues("X-Cache-Status")
+                .Single());
+
+        Assert.Equal(
+            "Elasticsearch",
+            firstResponse.Headers
+                .GetValues("X-Data-Source")
+                .Single());
+
+        Assert.Equal(
+            "HIT",
+            secondResponse.Headers
+                .GetValues("X-Cache-Status")
+                .Single());
+
+        Assert.Equal(
+            "Redis",
+            secondResponse.Headers
+                .GetValues("X-Data-Source")
+                .Single());
+    }
 }
