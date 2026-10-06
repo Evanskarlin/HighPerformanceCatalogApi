@@ -156,6 +156,19 @@
         code {
             color: #c4b5fd;
         }
+
+        .service-health {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .service-health:last-child {
+            border-bottom: 0;
+        }
     </style>
 </head>
 
@@ -187,18 +200,37 @@
         </div>
 
         <div class="card">
-            <h2>Infrastructure</h2>
+            <h2>Infrastructure Health</h2>
 
-            <p id="health-message">
-                Checking PostgreSQL, Redis and
-                Elasticsearch...
-            </p>
+            <div class="service-health">
+                <span>PostgreSQL</span>
 
-            <span
-                id="health-status"
-                class="status">
-                Checking
-            </span>
+                <span
+                    id="postgresql-status"
+                    class="status">
+                    Checking
+                </span>
+            </div>
+
+            <div class="service-health">
+                <span>Redis</span>
+
+                <span
+                    id="redis-status"
+                    class="status">
+                    Checking
+                </span>
+            </div>
+
+            <div class="service-health">
+                <span>Elasticsearch</span>
+
+                <span
+                    id="elasticsearch-status"
+                    class="status">
+                    Checking
+                </span>
+            </div>
         </div>
 
         <div class="card">
@@ -314,18 +346,52 @@ Redis query cache
 </div>
 
 <script>
+    function findHealthCheck(data, serviceName) {
+        if (!Array.isArray(data.checks)) {
+            return "Unknown";
+        }
+
+        const check =
+            data.checks.find(
+                item =>
+                    item.name.toLowerCase() ===
+                    serviceName.toLowerCase()
+            );
+
+        return check?.status ?? "Unknown";
+    }
+
+    function updateServiceStatus(elementId, status) {
+        const element =
+            document.getElementById(elementId);
+
+        if (!element) {
+            console.error(
+                `Health element not found: ${elementId}`
+            );
+
+            return;
+        }
+
+        element.textContent = status;
+
+        element.classList.remove(
+            "healthy",
+            "unhealthy"
+        );
+
+        if (status.toLowerCase() === "healthy") {
+            element.classList.add("healthy");
+        } else {
+            element.classList.add("unhealthy");
+        }
+    }
+
     async function checkHealth() {
-        const status =
-            document.getElementById(
-                "health-status");
-
-        const message =
-            document.getElementById(
-                "health-message");
-
         const responseTime =
             document.getElementById(
-                "response-time");
+                "response-time"
+            );
 
         try {
             const response =
@@ -334,43 +400,74 @@ Redis query cache
             const data =
                 await response.json();
 
+            console.log(
+                "Health response:",
+                data
+            );
+
             const timing =
                 response.headers.get(
-                    "X-Response-Time-Ms");
+                    "X-Response-Time-Ms"
+                );
 
-            responseTime.textContent =
-                timing
-                    ? `${timing} ms`
-                    : "Unavailable";
-
-            status.textContent =
-                data.status;
-
-            if (response.ok) {
-                status.classList.add(
-                    "healthy");
-
-                message.textContent =
-                    "PostgreSQL, Redis and Elasticsearch are available.";
-            } else {
-                status.classList.add(
-                    "unhealthy");
-
-                message.textContent =
-                    "One or more infrastructure services are unavailable.";
+            if (responseTime) {
+                responseTime.textContent =
+                    timing
+                        ? `${timing} ms`
+                        : "Unavailable";
             }
-        } catch {
-            status.textContent =
-                "Unavailable";
 
-            status.classList.add(
-                "unhealthy");
+            updateServiceStatus(
+                "postgresql-status",
+                findHealthCheck(
+                    data,
+                    "postgresql"
+                )
+            );
 
-            message.textContent =
-                "Unable to reach the health endpoint.";
+            updateServiceStatus(
+                "redis-status",
+                findHealthCheck(
+                    data,
+                    "redis"
+                )
+            );
+
+            updateServiceStatus(
+                "elasticsearch-status",
+                findHealthCheck(
+                    data,
+                    "elasticsearch"
+                )
+            );
+        } catch (error) {
+            console.error(
+                "Health check failed:",
+                error
+            );
+
+            updateServiceStatus(
+                "postgresql-status",
+                "Unavailable"
+            );
+
+            updateServiceStatus(
+                "redis-status",
+                "Unavailable"
+            );
+
+            updateServiceStatus(
+                "elasticsearch-status",
+                "Unavailable"
+            );
+
+            if (responseTime) {
+                responseTime.textContent =
+                    "Unavailable";
+            }
         }
     }
-
+    
     async function searchProducts() {
         const input =
             document.getElementById(
